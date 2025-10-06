@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(uuid())
+  name          String
+  email         String        @unique
+  birth_date    DateTime
+  created_at    DateTime      @default(now())
+  profile_image String?
+  updated_at    DateTime      @updatedAt
+  username      String        @unique
+  role          Role
+  classes       Class[]
+  Reservation   Reservation[]
+  Waitlist      Waitlist[]
+}
+
+model Class {
+  id          String        @id @default(uuid())
+  name        String
+  description String
+  teacherId   String
+  capacity    Int
+  date        DateTime
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @updatedAt
+  teacher     User          @relation(fields: [teacherId], references: [id])
+  Reservation Reservation[]
+  Waitlist    Waitlist[]
+}
+
+model Reservation {
+  id         String            @id @default(uuid())
+  class_id   String
+  user_id    String
+  status     ReservationStatus @default(confirmed)
+  created_at DateTime          @default(now())
+  class      Class             @relation(fields: [class_id], references: [id])
+  user       User              @relation(fields: [user_id], references: [id])
+
+  @@unique([class_id, user_id])
+}
+
+model Waitlist {
+  id         String   @id @default(uuid())
+  class_id   String
+  user_id    String
+  position   Int
+  created_at DateTime @default(now())
+  class      Class    @relation(fields: [class_id], references: [id])
+  user       User     @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, class_id])
+}
+
+enum Role {
+  admin
+  student
+  teacher
+}
+
+enum ReservationStatus {
+  confirmed
+  cancelled
+}
