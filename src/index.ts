@@ -5,8 +5,7 @@ import dotenv from 'dotenv';
 import { prisma } from './prisma';
 import usersRoutes from './routes/users.routes';
 import classesRoutes from './routes/classes.routes';
-
-
+import authRoutes from './routes/auth.routes';
 
 dotenv.config();
 
@@ -19,6 +18,7 @@ app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'API is running 🚀' });
 });
 
+app.use('/auth', authRoutes);
 app.use('/users', usersRoutes);
 app.use('/classes', classesRoutes);
 

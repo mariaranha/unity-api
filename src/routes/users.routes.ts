@@ -12,5 +12,47 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+ 
+router.get('/:userId/reservations', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const confirmedReservations = await prisma.reservation.findMany({
+      where: {
+        user_id: userId,
+        status: 'confirmed',
+      },
+      include: {
+        class: {
+          include: {
+            teacher: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const confirmed = confirmedReservations.map((r) => ({
+      classId: r.class.id,
+      className: r.class.name,
+      date: r.class.date,
+      teacher: r.class.teacher,
+    }));
+
+    res.json({
+      confirmed,
+    });
+
+  } catch (err) {
+    console.error('Error fetching user reservations:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
 
 export default router;

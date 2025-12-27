@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
 
@@ -48,7 +49,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/:id/book', async (req, res) => {
+router.post('/:id/book', authMiddleware, async (req, res) => {
   const classId = req.params.id;
   const { user_id } = req.body;
 
@@ -141,7 +142,7 @@ router.post('/:id/book', async (req, res) => {
   }
 });
 
-router.post('/:classId/cancel', async (req, res) => {
+router.post('/:classId/cancel', authMiddleware, async (req, res) => {
   const { classId } = req.params;
   const { userId } = req.body;
 
