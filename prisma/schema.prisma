@@ -46,7 +46,7 @@ model Reservation {
   class      Class             @relation(fields: [class_id], references: [id])
   user       User              @relation(fields: [user_id], references: [id])
 
-  @@unique([class_id, user_id])
+  @@unique([class_id, user_id], name: "class_user_unique")
 }
 
 model Waitlist {
@@ -58,7 +58,7 @@ model Waitlist {
   class      Class    @relation(fields: [class_id], references: [id])
   user       User     @relation(fields: [user_id], references: [id])
 
-  @@unique([user_id, class_id])
+  @@unique([user_id, class_id], name: "waitlist_user_class_unique")
 }
 
 enum Role {
