@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
 import { authMiddleware } from '../middlewares/auth.middleware';
+import { adminMiddleware } from '../middlewares/admin.middleware';
 
 const router = Router();
 
@@ -45,6 +46,31 @@ router.get('/', async (req, res) => {
     res.json(formatted);
   } catch (error) {
     console.error('Error fetching classes:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
+  const { name, description, teacherId, capacity, date } = req.body;
+
+  if (!name || !description || !teacherId || !capacity || !date) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const newClass = await prisma.class.create({
+      data: {
+        name,
+        description,
+        date: new Date(date),
+        capacity,
+        teacherId,
+      },
+    });
+
+    res.status(201).json(newClass);
+  } catch (error) {
+    console.error('Error creating class:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
