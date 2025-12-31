@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
- 
+
 router.get('/:userId/reservations', async (req, res) => {
   const { userId } = req.params;
 
@@ -53,6 +53,20 @@ router.get('/:userId/reservations', async (req, res) => {
   }
 });
 
+router.get('/teachers', async (req, res) => {
+  const teachers = await prisma.user.findMany({
+    where: {
+      role: 'teacher',
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+    },
+  });
 
+  res.json(teachers);
+});
 
 export default router;
