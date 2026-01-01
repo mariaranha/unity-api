@@ -1,2 +1,2 @@
 # unity-api
-Backend API for the a class scheduler app.
+Backend API for a class scheduler app.
