@@ -50,6 +50,57 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const cls = await prisma.class.findUnique({
+      where: { id },
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+          },
+        },
+        Reservation: {
+          where: {
+            status: 'confirmed',
+          },
+        },
+        Waitlist: {
+          orderBy: {
+            position: 'asc',
+          },
+        },
+      },
+    });
+
+    if (!cls) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+
+    const formatted = {
+      id: cls.id,
+      name: cls.name,
+      description: cls.description,
+      date: cls.date,
+      capacity: cls.capacity,
+      teacher: cls.teacher,
+      teacherId: cls.teacherId,
+      confirmedReservations: cls.Reservation.length,
+      availableSpots: cls.capacity - cls.Reservation.length,
+      waitlistCount: cls.Waitlist.length,
+    };
+
+    res.json(formatted);
+  } catch (error) {
+    console.error('Error fetching class:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   const { name, description, teacherId, capacity, date } = req.body;
 
@@ -71,6 +122,60 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     res.status(201).json(newClass);
   } catch (error) {
     console.error('Error creating class:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await prisma.$transaction([
+      prisma.reservation.deleteMany({
+        where: { class_id: id },
+      }),
+      prisma.waitlist.deleteMany({
+        where: { class_id: id },
+      }),
+      prisma.class.delete({
+        where: { id },
+      }),
+    ]);
+
+    res.json({ message: 'Class deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting class:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { name, description, teacherId, capacity, date } = req.body;
+
+  try {
+    const existingClass = await prisma.class.findUnique({
+      where: { id },
+    });
+
+    if (!existingClass) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+
+    const updatedClass = await prisma.class.update({
+      where: { id },
+      data: {
+        name: name ?? undefined,
+        description: description ?? undefined,
+        teacherId: teacherId ?? undefined,
+        capacity: capacity ?? undefined,
+        date: date ? new Date(date) : undefined,
+      },
+    });
+
+    res.json(updatedClass);
+  } catch (error) {
+    console.error('Error updating class:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
